@@ -9,7 +9,8 @@
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    adminSecretKey: ''
   };
 
   async function handleSubmit() {
@@ -22,13 +23,14 @@
     error = '';
 
     try {
-      const res = await fetch('/register', {
+      const res = await fetch('/register/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          adminSecretKey: formData.adminSecretKey
         })
       });
 
@@ -38,10 +40,10 @@
         // Registration successful, redirect to OTP verification
         goto(`/verify-otp?userId=${result.userId}`);
       } else {
-        error = result.error || 'Registration failed';
+        error = result.error || 'Admin registration failed';
       }
     } catch (err) {
-      error = 'An error occurred during registration';
+      error = 'An error occurred during admin registration';
     } finally {
       loading = false;
     }
@@ -53,10 +55,10 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Create Account
+          Admin Registration
         </h1>
         <p class="text-gray-600 dark:text-gray-400">
-          Join us today as a regular user
+          Create an admin account with secret key verification
         </p>
       </div>
 
@@ -95,6 +97,14 @@
           required
         />
 
+        <Input
+          label="Admin Secret Key"
+          type="password"
+          bind:value={formData.adminSecretKey}
+          placeholder="Enter the admin secret key"
+          required
+        />
+
         <Button
           type="submit"
           variant="primary"
@@ -104,7 +114,7 @@
           {#if loading}
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
           {/if}
-          Create Account
+          Create Admin Account
         </Button>
       </form>
 
@@ -119,12 +129,12 @@
           </a>
         </p>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-          Need to register as an admin?
+          Want to register as a regular user?
           <a 
-            href="/register/admin" 
+            href="/register" 
             class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 ml-1"
           >
-            Admin Registration
+            User Registration
           </a>
         </p>
       </div>

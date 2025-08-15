@@ -51,6 +51,7 @@
     {:else}
       <a href="/login" class="hover:underline">Login</a>
       <a href="/register" class="hover:underline">Register</a>
+      <a href="/register/admin" class="hover:underline">Admin Register</a>
     {/if}
   </div>
 </nav>
