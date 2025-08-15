@@ -20,7 +20,7 @@ DATABASE_URL="postgresql://username:password@localhost:5432/your_database_name"
 # DATABASE_URL="postgresql://postgres:password@localhost:5432/my_app_dev"
 
 # Example for production:
-# DATABASE_URL="postgresql://user:pass@host:port/database"
+# DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
 ```
 
 ## Step 2: Create Database
@@ -102,7 +102,7 @@ The application includes the following tables:
 
 Make sure your `.env` file is in the project root and contains:
 ```
-DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
 ```
 
 ## Production Deployment

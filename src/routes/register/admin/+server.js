@@ -8,10 +8,15 @@ import { generateOTP, generateOTPExpiry } from '$lib/utils.js';
 
 export async function POST({ request }) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, adminSecretKey } = await request.json();
     
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !adminSecretKey) {
       return json({ error: 'All fields are required.' }, { status: 400 });
+    }
+    
+    // Verify admin secret key
+    if (adminSecretKey !== process.env.ADMIN_SECRET_KEY) {
+      return json({ error: 'Invalid admin secret key.' }, { status: 400 });
     }
     
     // Check if user exists
@@ -28,12 +33,12 @@ export async function POST({ request }) {
     const otpExpiry = generateOTPExpiry();
     const now = new Date(); // Current timestamp
     
-    // Create user with OTP (always as 'user' role)
+    // Create admin user with OTP
     const [user] = await db.insert(users).values({ 
       name, 
       email, 
       password: hashedPassword,
-      role: 'user', // Always set as user role
+      role: 'admin', // Set role as admin
       otp,
       otpExpiry,
       emailVerified: false,
@@ -51,11 +56,11 @@ export async function POST({ request }) {
     
     return json({ 
       success: true,
-      message: 'Account created successfully! Please check your email for the verification OTP.',
+      message: 'Admin account created successfully! Please check your email for the verification OTP.',
       userId: user.id
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    return json({ error: 'Registration failed. Please try again.' }, { status: 500 });
+    console.error('Admin registration error:', error);
+    return json({ error: 'Admin registration failed. Please try again.' }, { status: 500 });
   }
-} 
+}

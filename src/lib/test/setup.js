@@ -4,7 +4,8 @@ import { vi } from 'vitest';
 // Mock environment variables
 vi.mock('$env/static/private', () => ({
 	AUTH_SECRET: 'test-secret-key',
-	DATABASE_URL: 'postgresql://localhost:5432/test_db',
+	DATABASE_URL: 'postgresql://postgres:postgres@localhost:5434/app',
+	ADMIN_SECRET_KEY: 'test-admin-secret-key',
 	EMAIL_FROM: 'test@example.com',
 	SMTP_HOST: 'localhost',
 	SMTP_PORT: 587,

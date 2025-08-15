@@ -12,7 +12,7 @@ This guide will help your team members connect to the shared PostgreSQL database
 
 The database is running in a Docker container with these details:
 - **Host**: localhost (or your machine's IP address)
-- **Port**: 5432
+- **Port**: 5434
 - **Database**: app
 - **Username**: postgres
 - **Password**: postgres
@@ -30,12 +30,12 @@ The database is running in a Docker container with these details:
 
 2. **Create .env file in your project:**
    ```env
-   DATABASE_URL="postgresql://postgres:postgres@[HOST_IP]:5432/app"
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
    ```
    
    Example:
    ```env
-   DATABASE_URL="postgresql://postgres:postgres@192.168.1.100:5432/app"
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
    ```
 
 3. **Install dependencies and start:**
@@ -55,7 +55,7 @@ If you prefer to run your own database locally:
 
 2. **Create .env file:**
    ```env
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app"
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
    ```
 
 3. **Set up schema:**
@@ -127,7 +127,7 @@ pnpm run db:stop
 ### Connection Issues:
 - Check if host machine's Docker container is running
 - Verify IP address is correct
-- Ensure port 5432 is accessible
+- Ensure port 5434 is accessible
 - Check firewall settings
 
 ### Port Conflicts:
@@ -140,7 +140,7 @@ pnpm run db:stop
     -p 5433:5432 \
     -d postgres:16-alpine
   ```
-- Update DATABASE_URL to use the new port (5433)
+- Update DATABASE_URL to use the new port (5434)
 
 ### Container Issues:
 ```bash

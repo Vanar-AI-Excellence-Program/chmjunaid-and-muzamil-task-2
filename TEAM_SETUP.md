@@ -90,7 +90,7 @@ Create a `.env` file in your project root:
 
 ```env
 # Database Configuration (shared with team)
-DATABASE_URL="postgresql://username:password@host:port/database"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
 
 # Development Settings
 NODE_ENV=development

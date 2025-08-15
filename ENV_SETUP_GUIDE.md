@@ -8,7 +8,7 @@ Create a `.env` file in your project root with the following variables:
 
 ```env
 # Database Configuration (Required)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
 
 # Authentication Secret (Required)
 AUTH_SECRET="your-super-secret-key-here"
@@ -26,6 +26,9 @@ GMAIL_APP_PASSWORD="your-gmail-app-password"
 # AI Integration (Optional - for chatbot functionality)
 GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-api-key"
 
+# Admin Configuration (Required for admin registration)
+ADMIN_SECRET_KEY="your-super-secret-admin-key-here"
+
 # Development Settings
 NODE_ENV="development"
 ```
@@ -35,8 +38,8 @@ NODE_ENV="development"
 ### 1. DATABASE_URL (Required)
 **What it is**: Connection string for your PostgreSQL database
 **How to get it**: 
-- **For Docker (current setup)**: `postgresql://postgres:postgres@localhost:5432/app`
-- **For team members**: `postgresql://postgres:postgres@[YOUR_IP]:5432/app`
+- **For Docker (current setup)**: `postgresql://postgres:postgres@localhost:5434/app`
+- **For team members**: `postgresql://postgres:postgres@localhost:5434/app`
 - **For cloud databases**: Provided by your database service
 
 ### 2. AUTH_SECRET (Required)
@@ -94,14 +97,29 @@ echo $random
 3. Click "Create API Key"
 4. Copy the generated key
 
+### 7. ADMIN_SECRET_KEY (Required for admin registration)
+**What it is**: Secret key required to register admin accounts
+**How to get it**: Generate a secure random string (at least 16 characters)
+**Quick generation**:
+```bash
+# On Windows PowerShell:
+$random = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | ForEach-Object {[char]$_})
+echo $random
+
+# Or use this online generator: https://generate-secret.vercel.app/32
+```
+
+**Example**: `ADMIN_SECRET_KEY="admin-secret-key-12345-abcdef-ghijkl"`
+
 ## Quick Setup for Development
 
 For immediate development, you only need these **required** variables:
 
 ```env
 # Required for basic functionality
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
 AUTH_SECRET="your-super-secret-key-here"
+ADMIN_SECRET_KEY="your-super-secret-admin-key-here"
 
 # Optional - add these later for full features
 # GOOGLE_CLIENT_ID=""
@@ -126,7 +144,7 @@ For your team members, share only the **DATABASE_URL** with your machine's IP:
 
 ```env
 # Team members use this to connect to your database
-DATABASE_URL="postgresql://postgres:postgres@[YOUR_IP_ADDRESS]:5432/app"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/app"
 AUTH_SECRET="[EACH_MEMBER_GENERATES_THEIR_OWN]"
 ```
 
