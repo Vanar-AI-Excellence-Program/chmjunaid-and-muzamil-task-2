@@ -4,6 +4,7 @@
   let messages: Array<{type: 'user' | 'bot', content: string, timestamp: Date}> = [];
   let inputMessage = '';
   let isLoading = false;
+  let isStreaming = false;
   let isOpen = false;
   let chatContainer: HTMLElement;
 
@@ -32,6 +33,7 @@
     }];
 
     isLoading = true;
+    isStreaming = false;
 
     try {
       const response = await fetch('/api/chat', {
@@ -42,23 +44,82 @@
         body: JSON.stringify({ message: userMessage }),
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        // Add bot response
-        messages = [...messages, {
-          type: 'bot',
-          content: result.response,
-          timestamp: new Date()
-        }];
-      } else {
-        // Add error message
-        messages = [...messages, {
-          type: 'bot',
-          content: `Sorry, I encountered an error: ${result.error}`,
-          timestamp: new Date()
-        }];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      // Add initial bot message for streaming
+      const botMessageIndex = messages.length;
+      messages = [...messages, {
+        type: 'bot',
+        content: '',
+        timestamp: new Date()
+      }];
+
+      // Start streaming indicator
+      isStreaming = true;
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body reader available');
+      }
+
+      let accumulatedContent = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const data = JSON.parse(line);
+                
+                if (data.type === 'chunk') {
+                  accumulatedContent += data.content;
+                  
+                  // Update immediately for smooth streaming
+                  messages[botMessageIndex] = {
+                    ...messages[botMessageIndex],
+                    content: accumulatedContent
+                  };
+                  messages = [...messages]; // Trigger reactivity
+                  
+                  // Small delay to make streaming visible
+                  await new Promise(resolve => setTimeout(resolve, 10));
+                } else if (data.type === 'complete') {
+                  // Streaming completed
+                  break;
+                } else if (data.type === 'error') {
+                  throw new Error(data.error || 'Streaming error');
+                }
+              } catch (parseError) {
+                console.error('Error parsing stream data:', parseError);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      // Ensure final content is set
+      if (accumulatedContent) {
+        messages[botMessageIndex] = {
+          ...messages[botMessageIndex],
+          content: accumulatedContent
+        };
+        messages = [...messages];
+      }
+
     } catch (error) {
       console.error('Chat error:', error);
       messages = [...messages, {
@@ -68,6 +129,7 @@
       }];
     } finally {
       isLoading = false;
+      isStreaming = false;
       // Scroll to bottom
       setTimeout(() => {
         if (chatContainer) {
@@ -155,17 +217,22 @@
       {#each messages as message}
         <div class="flex {message.type === 'user' ? 'justify-end' : 'justify-start'}">
           <div class="max-w-xs lg:max-w-md">
-            <div class="rounded-lg px-4 py-2 {message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}">
-              <p class="text-sm">{message.content}</p>
-              <p class="text-xs {message.type === 'user' ? 'text-blue-100' : 'text-gray-500'} mt-1">
-                {message.timestamp.toLocaleTimeString()}
-              </p>
-            </div>
+                         <div class="rounded-lg px-4 py-2 {message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}">
+               <p class="text-sm">
+                 {message.content}
+                 {#if isStreaming && message === messages[messages.length - 1]}
+                   <span class="inline-block w-0.5 h-4 bg-gray-400 ml-1 animate-pulse"></span>
+                 {/if}
+               </p>
+               <p class="text-xs {message.type === 'user' ? 'text-blue-100' : 'text-gray-500'} mt-1">
+                 {message.timestamp.toLocaleTimeString()}
+               </p>
+             </div>
           </div>
         </div>
       {/each}
       
-      {#if isLoading}
+      {#if isLoading && !isStreaming}
         <div class="flex justify-start">
           <div class="max-w-xs lg:max-w-md">
             <div class="bg-white text-gray-800 border border-gray-200 rounded-lg px-4 py-2">
@@ -176,6 +243,23 @@
                   <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
                 </div>
                 <span class="text-sm text-gray-500">AI is thinking...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      {/if}
+      
+      {#if isStreaming}
+        <div class="flex justify-start">
+          <div class="max-w-xs lg:max-w-md">
+            <div class="bg-white text-gray-800 border border-gray-200 rounded-lg px-4 py-2">
+              <div class="flex items-center space-x-2">
+                <div class="flex space-x-1">
+                  <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.1s"></div>
+                  <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                </div>
+                <span class="text-sm text-blue-600">AI is typing...</span>
               </div>
             </div>
           </div>
