@@ -2,21 +2,108 @@
   import { onMount } from 'svelte';
   
   let messages: Array<{type: 'user' | 'bot', content: string, timestamp: Date}> = [];
+  let conversations: Array<{id: number, title: string, createdAt: Date, updatedAt: Date}> = [];
+  let currentConversationId: number | null = null;
   let inputMessage = '';
   let isLoading = false;
   let isStreaming = false;
   let chatContainer: HTMLElement;
+  let showSidebar = false;
 
-  onMount(() => {
-    // Add welcome message
-    messages = [
-      {
-        type: 'bot',
-        content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?',
-        timestamp: new Date()
-      }
-    ];
+  onMount(async () => {
+    await loadConversations();
+    // Add welcome message if no conversation is selected
+    if (!currentConversationId) {
+      messages = [
+        {
+          type: 'bot',
+          content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?',
+          timestamp: new Date()
+        }
+      ];
+    }
   });
+
+  async function loadConversations() {
+    try {
+      const response = await fetch('/chat/api');
+      if (response.ok) {
+        const data = await response.json();
+        conversations = data.conversations.map((conv: any) => ({
+          ...conv,
+          createdAt: new Date(conv.createdAt),
+          updatedAt: new Date(conv.updatedAt)
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    }
+  }
+
+  async function loadConversation(conversationId: number) {
+    try {
+      const response = await fetch(`/chat/api/messages?conversationId=${conversationId}`);
+      if (response.ok) {
+        const data = await response.json();
+        messages = data.messages.map((msg: any) => ({
+          type: msg.role === 'user' ? 'user' : 'bot',
+          content: msg.content,
+          timestamp: new Date(msg.createdAt)
+        }));
+        currentConversationId = conversationId;
+      }
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+    }
+  }
+
+  async function createNewConversation() {
+    try {
+      const response = await fetch('/chat/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'New Conversation' })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        await loadConversations();
+        currentConversationId = data.conversation.id;
+        messages = [];
+        showSidebar = false;
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
+  }
+
+  async function deleteConversation(conversationId: number) {
+    if (!confirm('Are you sure you want to delete this conversation?')) return;
+    
+    try {
+      const response = await fetch('/chat/api', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId })
+      });
+      
+      if (response.ok) {
+        await loadConversations();
+        if (currentConversationId === conversationId) {
+          currentConversationId = null;
+          messages = [
+            {
+              type: 'bot',
+              content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?',
+              timestamp: new Date()
+            }
+          ];
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+    }
+  }
 
   async function sendMessage() {
     if (!inputMessage.trim() || isLoading) return;
@@ -40,7 +127,10 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ 
+          message: userMessage,
+          conversationId: currentConversationId 
+        }),
       });
 
       if (!response.ok) {
@@ -95,7 +185,11 @@
                   // Small delay to make streaming visible
                   await new Promise(resolve => setTimeout(resolve, 10));
                 } else if (data.type === 'complete') {
-                  // Streaming completed
+                  // Update conversation ID if this is a new conversation
+                  if (data.conversationId && !currentConversationId) {
+                    currentConversationId = data.conversationId;
+                    await loadConversations();
+                  }
                   break;
                 } else if (data.type === 'error') {
                   throw new Error(data.error || 'Streaming error');
@@ -146,6 +240,7 @@
   }
 
   function clearChat() {
+    currentConversationId = null;
     messages = [
       {
         type: 'bot',
@@ -156,16 +251,75 @@
   }
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-  <div class="max-w-4xl mx-auto px-4">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">AI Chat Assistant</h1>
-      <p class="text-gray-600">Powered by Google Gemini - Your intelligent conversation partner</p>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <!-- Sidebar Header -->
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900">Conversations</h2>
+          <button
+            on:click={createNewConversation}
+            class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            title="New Chat"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Conversations List -->
+      <div class="flex-1 overflow-y-auto p-2">
+        {#if conversations.length === 0}
+          <div class="text-center py-8 text-gray-500">
+            <p>No conversations yet</p>
+            <p class="text-sm">Start a new chat to begin!</p>
+          </div>
+        {:else}
+          {#each conversations as conversation}
+            <div 
+              class="p-3 rounded-lg cursor-pointer transition-colors {currentConversationId === conversation.id ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'}"
+              on:click={() => loadConversation(conversation.id)}
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-medium text-gray-900 truncate">
+                    {conversation.title}
+                  </h3>
+                  <p class="text-xs text-gray-500">
+                    {conversation.updatedAt.toLocaleDateString()}
+                  </p>
+                </div>
+                <button
+                  on:click|stopPropagation={() => deleteConversation(conversation.id)}
+                  class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  title="Delete conversation"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          {/each}
+        {/if}
+      </div>
     </div>
 
-    <!-- Chat Container -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col">
+      <div class="p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-4xl font-bold text-gray-900 mb-2">AI Chat Assistant</h1>
+          <p class="text-gray-600">Powered by Google Gemini - Your intelligent conversation partner</p>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-4xl mx-auto">
       <!-- Chat Header -->
       <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
         <div class="flex items-center justify-between">
@@ -276,38 +430,40 @@
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>
-    </div>
+        </div>
 
-    <!-- Features -->
-    <div class="mt-8 grid md:grid-cols-3 gap-6">
-      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
-        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
+        <!-- Features -->
+        <div class="mt-8 grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Fast & Responsive</h3>
+            <p class="text-gray-600 text-sm">Get instant AI responses powered by Google's latest Gemini model</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Smart & Helpful</h3>
+            <p class="text-gray-600 text-sm">Ask questions, get explanations, or just have a conversation</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Secure & Private</h3>
+            <p class="text-gray-600 text-sm">Your conversations are private and secure</p>
+          </div>
         </div>
-        <h3 class="font-semibold text-gray-900 mb-2">Fast & Responsive</h3>
-        <p class="text-gray-600 text-sm">Get instant AI responses powered by Google's latest Gemini model</p>
-      </div>
-      
-      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
-        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <h3 class="font-semibold text-gray-900 mb-2">Smart & Helpful</h3>
-        <p class="text-gray-600 text-sm">Ask questions, get explanations, or just have a conversation</p>
-      </div>
-      
-      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
-        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-          </svg>
-        </div>
-        <h3 class="font-semibold text-gray-900 mb-2">Secure & Private</h3>
-        <p class="text-gray-600 text-sm">Your conversations are private and secure</p>
       </div>
     </div>
   </div>
