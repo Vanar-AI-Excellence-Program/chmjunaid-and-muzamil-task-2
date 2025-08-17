@@ -1,11 +1,22 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { db } from '$lib/db.js';
+import { conversations, messages } from '$lib/schema.js';
+import { eq, and } from 'drizzle-orm';
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
   try {
-    const { message } = await request.json();
+    const session = await locals.getSession();
+    if (!session?.user?.id) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { message, conversationId } = await request.json();
     
     if (!message) {
       return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -21,6 +32,56 @@ export async function POST({ request }) {
       });
     }
 
+    const userId = session.user.id;
+    let currentConversationId = conversationId;
+
+    // If no conversation ID provided, create a new conversation
+    if (!currentConversationId) {
+      const [newConversation] = await db
+        .insert(conversations)
+        .values({
+          userId,
+          title: message.substring(0, 50) + (message.length > 50 ? '...' : '')
+        })
+        .returning();
+      
+      currentConversationId = newConversation.id;
+    } else {
+      // Verify the conversation belongs to the user
+      const conversation = await db
+        .select()
+        .from(conversations)
+        .where(
+          and(
+            eq(conversations.id, currentConversationId),
+            eq(conversations.userId, userId)
+          )
+        )
+        .then(res => res[0]);
+
+      if (!conversation) {
+        return new Response(JSON.stringify({ error: 'Conversation not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Save user message to database
+    await db
+      .insert(messages)
+      .values({
+        conversationId: currentConversationId,
+        content: message,
+        role: 'user'
+      });
+
+    // Update conversation's updatedAt timestamp
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, currentConversationId));
+
     // Get the generative model
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
@@ -31,10 +92,14 @@ export async function POST({ request }) {
           // Generate content with streaming
           const result = await model.generateContentStream(message);
           
+          let fullResponse = '';
+          
           // Stream the response chunks
           for await (const chunk of result.stream) {
             const chunkText = chunk.text();
             if (chunkText) {
+              fullResponse += chunkText;
+              
               // Split into smaller chunks for smoother streaming
               const words = chunkText.split(/(\s+)/);
               
@@ -56,9 +121,21 @@ export async function POST({ request }) {
             }
           }
           
+          // Save AI response to database
+          if (fullResponse) {
+            await db
+              .insert(messages)
+              .values({
+                conversationId: currentConversationId,
+                content: fullResponse,
+                role: 'assistant'
+              });
+          }
+          
           // Send completion signal
           const completionData = JSON.stringify({ 
             type: 'complete',
+            conversationId: currentConversationId,
             timestamp: new Date().toISOString()
           }) + '\n';
           

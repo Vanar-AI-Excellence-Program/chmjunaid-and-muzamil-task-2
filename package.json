@@ -14,8 +14,8 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
-		"db:start": "docker run --name sveltekit-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=app -p 5434:5432 -d postgres:16-alpine || exit 0",
-		"db:stop": "docker rm -f sveltekit-postgres || exit 0",
+		"db:start": "docker-compose up -d postgres",
+		"db:stop": "docker-compose down",
 		"seed:admin": "node scripts/seed-admin.js",
 		"email:test": "node scripts/test-email.js"
 	},

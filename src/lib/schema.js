@@ -50,3 +50,19 @@ export const verificationTokens = pgTable('verificationToken', {
 }, (table) => ({
   compoundKey: primaryKey({ columns: [table.identifier, table.token] })
 }));
+
+export const conversations = pgTable('conversation', {
+  id: serial('id').primaryKey(),
+  userId: integer('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).defaultNow(),
+});
+
+export const messages = pgTable('message', {
+  id: serial('id').primaryKey(),
+  conversationId: integer('conversationId').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  role: varchar('role', { length: 20 }).notNull(), // 'user' or 'assistant'
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+});
