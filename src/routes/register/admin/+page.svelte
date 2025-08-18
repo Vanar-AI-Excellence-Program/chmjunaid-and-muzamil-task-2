@@ -50,21 +50,26 @@
   }
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-white to-indigo-50 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center px-6 py-16">
+<div class="min-h-screen bg-gray-900 flex items-center justify-center px-6 py-16">
   <div class="w-full max-w-md">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8">
+    <div class="card p-8">
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">
           Admin Registration
         </h1>
-        <p class="text-gray-600 dark:text-gray-400">
+        <p class="text-gray-400">
           Create an admin account with secret key verification
         </p>
       </div>
 
       {#if error}
-        <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p class="text-red-600 dark:text-red-400 text-sm">{error}</p>
+        <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+          <p class="text-red-400 text-sm">{error}</p>
         </div>
       {/if}
 
@@ -119,20 +124,20 @@
       </form>
 
       <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-gray-400">
           Already have an account?
           <a 
             href="/login" 
-            class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 ml-1"
+            class="font-medium text-orange-400 hover:text-orange-300 ml-1 transition-colors"
           >
             Sign in
           </a>
         </p>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        <p class="text-sm text-gray-400 mt-2">
           Want to register as a regular user?
           <a 
             href="/register" 
-            class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 ml-1"
+            class="font-medium text-orange-400 hover:text-orange-300 ml-1 transition-colors"
           >
             User Registration
           </a>
