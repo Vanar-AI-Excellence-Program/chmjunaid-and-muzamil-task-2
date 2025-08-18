@@ -1,15 +1,9 @@
-# Complete Testing Suite - SvelteKit Application
+# SvelteKit Application
 
 ## Overview
-This project now has a comprehensive testing suite covering all major functionality:
+This is a SvelteKit application with authentication, chat functionality, and dashboard features.
 
-## Testing Infrastructure
-- **Unit Tests**: Vitest with Testing Library for component and utility testing
-- **E2E Tests**: Playwright for end-to-end user journey testing
-- **Mock Data**: Comprehensive mock data for testing scenarios
-- **Test Setup**: Complete test environment configuration
-
-## Test Coverage Areas
+## Features
 
 ### 1. Authentication Flow
 - Login/Registration forms
@@ -40,57 +34,55 @@ This project now has a comprehensive testing suite covering all major functional
 - Message storage
 - Session management
 
-## Running Tests
+## Project Structure
+```
+├── src/
+│   ├── lib/
+│   │   ├── auth.js           # Authentication utilities
+│   │   ├── db.js             # Database configuration
+│   │   ├── email.js          # Email utilities
+│   │   └── components/       # UI components
+│   └── routes/               # Application routes
+├── scripts/                  # Utility scripts
+├── static/                   # Static assets
+└── README.md                 # This file
+```
 
-### Unit Tests
+## Getting Started
+
+1. Clone this repository:
 ```bash
-npm test
+git clone <repository-url>
+cd chmjunaid-and-muzamil-task-2
 ```
 
-### E2E Tests
+2. Install dependencies:
 ```bash
-npm run test:e2e
+pnpm install
 ```
 
-### All Tests
+3. Set up environment variables (see .env.example)
+
+4. Start the database:
 ```bash
-npm run test:all
+pnpm run db:start
 ```
 
-## Test Structure
-```
-├── src/lib/
-│   ├── auth.test.js          # Unit tests for auth utilities
-│   └── test/
-│       ├── setup.js          # Test configuration
-│       └── mocks.js          # Mock data
-├── tests/
-│   └── e2e/
-│       ├── auth.spec.js      # E2E auth tests
-│       └── dashboard.spec.js # E2E dashboard tests
-├── vitest.config.js          # Unit test config
-├── playwright.config.js      # E2E test config
-└── README.md               # This file
+5. Push database schema:
+```bash
+pnpm run db:push
 ```
 
-## Test Commands
-- `npm test` - Run unit tests
-- `npm run test:e2e` - Run e2e tests
-- `npm run test:all` - Run all tests
-- `npm run test:coverage` - Run tests with coverage
+6. Start the development server:
+```bash
+pnpm run dev
+```
 
-## Coverage Areas
-✅ Authentication (login/register/password reset)
-✅ Dashboard functionality (admin/user dashboards)
-✅ Chat system
-✅ Profile management
-✅ Email verification
-✅ API endpoints
-✅ Database operations
-✅ Responsive design
-
-## Next Steps
-1. Run `npm test` to execute all unit tests
-2. Run `npm run test:e2e` to execute all e2e tests
-3. Run `npm run test:all` to execute all tests
-4. Run `npm run test:coverage` to see coverage report
+## Available Scripts
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm preview` - Preview production build
+- `pnpm db:start` - Start database
+- `pnpm db:stop` - Stop database
+- `pnpm db:migrate` - Run database migrations
+- `pnpm seed:admin` - Seed admin user

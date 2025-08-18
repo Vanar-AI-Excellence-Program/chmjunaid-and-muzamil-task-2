@@ -1,6 +1,7 @@
 <script lang="ts">
   export let variant: 'default' | 'elevated' | 'outlined' = 'default';
   export let padding: 'none' | 'sm' | 'md' | 'lg' = 'md';
+  export let className: string = '';
   
   const baseClasses = 'rounded-xl transition-all duration-200';
   const variants = {
@@ -16,7 +17,7 @@
     lg: 'p-8'
   };
   
-  $: classes = `${baseClasses} ${variants[variant]} ${paddings[padding]}`;
+  $: classes = `${baseClasses} ${variants[variant]} ${paddings[padding]} ${className}`;
 </script>
 
 <div class={classes}>

@@ -96,7 +96,6 @@
                   // Small delay to make streaming visible
                   await new Promise(resolve => setTimeout(resolve, 10));
                 } else if (data.type === 'complete') {
-                  // Streaming completed
                   break;
                 } else if (data.type === 'error') {
                   throw new Error(data.error || 'Streaming error');
@@ -164,7 +163,7 @@
 <!-- Chatbot Toggle Button -->
 <button
   on:click={toggleChat}
-  class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-110"
+  class="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-full p-4 shadow-professional-lg transition-all duration-200 hover:scale-110"
   title="Open AI Chatbot"
 >
   {#if isOpen}
@@ -180,9 +179,9 @@
 
 <!-- Chatbot Interface -->
 {#if isOpen}
-  <div class="fixed bottom-24 right-6 z-40 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
+  <div class="fixed bottom-24 right-6 z-40 w-96 h-[500px] bg-gray-800 rounded-xl shadow-professional-lg border border-gray-700 flex flex-col">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
+    <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-t-xl">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -192,7 +191,7 @@
           </div>
           <div>
             <h3 class="font-semibold">AI Assistant</h3>
-            <p class="text-xs text-blue-100">Powered by Gemini</p>
+            <p class="text-xs text-orange-100">Powered by Gemini</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
@@ -212,22 +211,22 @@
     <!-- Messages -->
     <div 
       bind:this={chatContainer}
-      class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+      class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900"
     >
       {#each messages as message}
         <div class="flex {message.type === 'user' ? 'justify-end' : 'justify-start'}">
           <div class="max-w-xs lg:max-w-md">
-                         <div class="rounded-lg px-4 py-2 {message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'}">
-               <p class="text-sm">
-                 {message.content}
-                 {#if isStreaming && message === messages[messages.length - 1]}
-                   <span class="inline-block w-0.5 h-4 bg-gray-400 ml-1 animate-pulse"></span>
-                 {/if}
-               </p>
-               <p class="text-xs {message.type === 'user' ? 'text-blue-100' : 'text-gray-500'} mt-1">
-                 {message.timestamp.toLocaleTimeString()}
-               </p>
-             </div>
+            <div class="rounded-lg px-4 py-2 {message.type === 'user' ? 'message-user' : 'message-bot'}">
+              <p class="text-sm">
+                {message.content}
+                {#if isStreaming && message === messages[messages.length - 1]}
+                  <span class="inline-block w-0.5 h-4 bg-white ml-1 animate-pulse"></span>
+                {/if}
+              </p>
+              <p class="text-xs {message.type === 'user' ? 'text-orange-100' : 'text-gray-400'} mt-1">
+                {message.timestamp.toLocaleTimeString()}
+              </p>
+            </div>
           </div>
         </div>
       {/each}
@@ -235,31 +234,14 @@
       {#if isLoading && !isStreaming}
         <div class="flex justify-start">
           <div class="max-w-xs lg:max-w-md">
-            <div class="bg-white text-gray-800 border border-gray-200 rounded-lg px-4 py-2">
+            <div class="message-bot px-4 py-2">
               <div class="flex items-center space-x-2">
-                <div class="flex space-x-1">
-                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                <div class="loading-dots">
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
                 </div>
-                <span class="text-sm text-gray-500">AI is thinking...</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      {/if}
-      
-      {#if isStreaming}
-        <div class="flex justify-start">
-          <div class="max-w-xs lg:max-w-md">
-            <div class="bg-white text-gray-800 border border-gray-200 rounded-lg px-4 py-2">
-              <div class="flex items-center space-x-2">
-                <div class="flex space-x-1">
-                  <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.1s"></div>
-                  <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-                </div>
-                <span class="text-sm text-blue-600">AI is typing...</span>
+                <span class="text-sm text-gray-400">AI is thinking...</span>
               </div>
             </div>
           </div>
@@ -268,20 +250,20 @@
     </div>
 
     <!-- Input -->
-    <div class="p-4 border-t border-gray-200 bg-white rounded-b-lg">
+    <div class="p-4 border-t border-gray-700 bg-gray-800">
       <div class="flex space-x-2">
         <input
           type="text"
           bind:value={inputMessage}
           on:keypress={handleKeyPress}
           placeholder="Type your message..."
-          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="input-field flex-1 text-sm"
           disabled={isLoading}
         />
         <button
           on:click={sendMessage}
           disabled={!inputMessage.trim() || isLoading}
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
