@@ -83,8 +83,26 @@
       <p class="text-gray-600 dark:text-gray-400">Manage users and monitor system activity</p>
     </div>
 
+    <!-- Navigation -->
+    <div class="mb-8">
+      <nav class="flex space-x-4">
+        <a 
+          href="/admin" 
+          class="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors"
+        >
+          Users
+        </a>
+        <a 
+          href="/admin/sessions" 
+          class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          Sessions
+        </a>
+      </nav>
+    </div>
+
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
           <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -137,6 +155,24 @@
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Verified</p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">{verifiedUsers}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Sessions</p>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">
+              <a href="/admin/sessions" class="hover:text-indigo-600 transition-colors">
+                View All
+              </a>
+            </p>
           </div>
         </div>
       </div>
