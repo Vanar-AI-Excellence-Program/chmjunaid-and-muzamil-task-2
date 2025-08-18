@@ -17,25 +17,32 @@
     error = '';
 
     try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-        callbackUrl: '/'
+      // Use custom credentials endpoint that creates database sessions
+      const response = await fetch('/auth/credentials-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
-      if (result?.error) {
+      const result = await response.json();
+
+      if (!response.ok) {
         if (result.error.includes('verify your email')) {
-          // Redirect to OTP verification with email
           goto(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
           return;
         }
         error = result.error;
-      } else if (result?.ok) {
-        // Successful login, redirect to home
-        await invalidate('app:auth');
-        goto('/');
+        return;
       }
+
+      // Invalidate and redirect on success
+      await invalidate('app:auth');
+      goto('/');
     } catch (err) {
       console.error('Login error:', err);
       error = 'An error occurred during sign in';
@@ -46,22 +53,7 @@
 
   async function handleSocialLogin(provider: 'google' | 'github') {
     try {
-      console.log(`Initiating ${provider} sign in...`);
-      
-      const result = await signIn(provider, { 
-        callbackUrl: '/',
-        redirect: false 
-      });
-      
-      console.log(`${provider} sign in result:`, result);
-      
-      if (result?.url) {
-        console.log(`Redirecting to: ${result.url}`);
-        window.location.href = result.url;
-      } else {
-        console.error(`No URL returned from ${provider} sign in`);
-        error = `Failed to initiate ${provider} sign in`;
-      }
+      await signIn(provider, { callbackUrl: '/', redirect: true });
     } catch (err) {
       console.error(`Error signing in with ${provider}:`, err);
       error = `Failed to sign in with ${provider}`;

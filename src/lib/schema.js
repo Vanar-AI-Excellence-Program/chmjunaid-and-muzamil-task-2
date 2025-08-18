@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, timestamp, boolean, integer, text, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, timestamp, boolean, integer, text, primaryKey, jsonb } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('user', {
   id: serial('id').primaryKey(),
@@ -37,10 +37,10 @@ export const accounts = pgTable('account', {
 
 export const sessions = pgTable('session', {
   id: serial('id').primaryKey(),
-  // Increase length to support Auth.js v5 encrypted tokens
   sessionToken: varchar('sessionToken', { length: 1024 }).notNull().unique(),
   userId: integer('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expires: timestamp('expires', { mode: 'date' }).notNull(),
+  data: jsonb('data'),
 });
 
 export const verificationTokens = pgTable('verificationToken', {

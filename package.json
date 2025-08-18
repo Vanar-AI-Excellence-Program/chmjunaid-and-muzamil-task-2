@@ -17,7 +17,11 @@
 		"db:start": "docker-compose up -d postgres",
 		"db:stop": "docker-compose down",
 		"seed:admin": "node scripts/seed-admin.js",
-		"email:test": "node scripts/test-email.js"
+		"email:test": "node scripts/test-email.js",
+		"sessions:cleanup": "node scripts/cleanup-sessions.js",
+		"sessions:cleanup:dry": "node scripts/cleanup-sessions.js --dry-run",
+		"sessions:cleanup:verbose": "node scripts/cleanup-sessions.js --verbose",
+		"test:db": "node scripts/test-db-connection.js"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^6.0.0",
@@ -48,6 +52,6 @@
 		"dotenv": "^17.2.1",
 		"drizzle-orm": "^0.44.4",
 		"nodemailer": "^6.10.1",
-		"pg": "^8.16.3"
+		"postgres": "^3.4.7"
 	}
 }

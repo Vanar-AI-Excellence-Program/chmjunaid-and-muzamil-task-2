@@ -1,5 +1,6 @@
 <script>
   import { signOut } from '@auth/sveltekit/client';
+  import { goto } from '$app/navigation';
   import { invalidate } from '$app/navigation';
   import Chatbot from '$lib/components/Chatbot.svelte';
   
@@ -15,9 +16,7 @@
 
   async function handleLogout() {
     try {
-      await signOut({ redirect: true, callbackUrl: '/login' });
-      // Invalidate auth data after logout
-      await invalidate('app:auth');
+      await signOut({ callbackUrl: '/login', redirect: true });
     } catch (error) {
       console.error('Logout failed:', error);
     }
