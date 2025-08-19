@@ -48,9 +48,9 @@ export async function sendOTPEmail(email, otp) {
   `;
 
   await transporter.sendMail({
-    from: `"AuthApp" <${process.env.GMAIL_USER}>`,
+    from: `"Authenra" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: 'Email Verification OTP - AuthApp',
+    subject: 'Email Verification OTP - Authenra',
     html: htmlContent
   });
 }
@@ -82,9 +82,9 @@ export async function sendVerificationEmail(email, token) {
   `;
 
   await transporter.sendMail({
-    from: `"AuthApp" <${process.env.GMAIL_USER}>`,
+    from: `"Authenra" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: 'Verify Your Email Address - AuthApp',
+    subject: 'Verify Your Email Address - Authenra',
     html: htmlContent
   });
 }
@@ -97,7 +97,7 @@ export async function sendPasswordResetEmail(email, token) {
       <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <h2 style="color: #333; text-align: center; margin-bottom: 30px;">Reset Your Password</h2>
         <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
-          You requested a password reset for your AuthApp account. Click the button below to create a new password.
+          You requested a password reset for your Authenra account. Click the button below to create a new password.
         </p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${url}" style="background-color: #ef4444; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
@@ -117,9 +117,9 @@ export async function sendPasswordResetEmail(email, token) {
   `;
 
   await transporter.sendMail({
-    from: `"AuthApp" <${process.env.GMAIL_USER}>`,
+    from: `"Authenra" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: 'Reset Your Password - AuthApp',
+    subject: 'Reset Your Password - Authenra',
     html: htmlContent
   });
 }
@@ -128,9 +128,9 @@ export async function sendWelcomeEmail(email, name) {
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
       <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; text-align: center; margin-bottom: 30px;">Welcome to AuthApp! 🎉</h2>
+        <h2 style="color: #333; text-align: center; margin-bottom: 30px;">Welcome to Authenra! 🎉</h2>
         <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
-          Hi ${name || 'there'}! Welcome to AuthApp. Your account has been successfully created and verified.
+          Hi ${name || 'there'}! Welcome to Authenra. Your account has been successfully created and verified.
         </p>
         <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
           You can now log in to your account and start using all the features we have to offer.
@@ -148,9 +148,9 @@ export async function sendWelcomeEmail(email, name) {
   `;
 
   await transporter.sendMail({
-    from: `"AuthApp" <${process.env.GMAIL_USER}>`,
+    from: `"Authenra" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: 'Welcome to AuthApp!',
+    subject: 'Welcome to Authenra!',
     html: htmlContent
   });
 }

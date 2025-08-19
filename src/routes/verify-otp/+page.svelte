@@ -156,7 +156,7 @@
 </script>
 
 <svelte:head>
-  <title>Verify OTP - SecureAuth</title>
+      <title>Verify OTP - Authenra</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

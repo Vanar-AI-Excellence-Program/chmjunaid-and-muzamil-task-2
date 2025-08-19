@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   
   let messages: Array<{type: 'user' | 'bot', content: string, timestamp: Date}> = [];
   let conversations: Array<{id: number, title: string, createdAt: Date, updatedAt: Date}> = [];
@@ -9,13 +9,12 @@
   let isStreaming = false;
   let chatContainer: HTMLElement;
   let showSidebar = false;
-
-  // Auto-scroll to bottom when messages change
-  $: if (messages.length > 0 && chatContainer) {
-    setTimeout(() => {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, 10);
-  }
+  
+  // Auto-scroll state management
+  let shouldAutoScroll = true;
+  let isUserScrolling = false;
+  let scrollTimeout: NodeJS.Timeout;
+  let previousMessageCount = 0;
 
   onMount(async () => {
     await loadConversations();
@@ -29,7 +28,74 @@
         }
       ];
     }
+    
+    // Initialize auto-scroll
+    previousMessageCount = messages.length;
   });
+
+  // Cleanup function for timeouts
+  function cleanup() {
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
+    }
+  }
+
+  onDestroy(() => {
+    cleanup();
+  });
+
+  // Smart auto-scroll function
+  function scrollToBottom(smooth = true) {
+    if (chatContainer) {
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+    }
+  }
+
+  // Check if user is at the bottom of the chat
+  function isAtBottom() {
+    if (!chatContainer) return true;
+    const threshold = 50; // pixels from bottom
+    return chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - threshold;
+  }
+
+  // Handle scroll events
+  function handleScroll() {
+    if (!chatContainer) return;
+    
+    // Clear existing timeout
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
+    }
+    
+    // Set user scrolling flag
+    isUserScrolling = true;
+    
+    // Check if user is at bottom
+    const atBottom = isAtBottom();
+    
+    // Update auto-scroll state
+    shouldAutoScroll = atBottom;
+    
+    // Clear user scrolling flag after a delay
+    scrollTimeout = setTimeout(() => {
+      isUserScrolling = false;
+    }, 150);
+  }
+
+  // Auto-scroll reactive statement
+  $: if (messages.length > 0 && chatContainer && shouldAutoScroll && !isUserScrolling) {
+    // Only auto-scroll if new messages were added
+    if (messages.length > previousMessageCount) {
+      // Use a small delay to ensure DOM is updated
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 50);
+    }
+    previousMessageCount = messages.length;
+  }
 
   async function loadConversations() {
     try {
@@ -58,6 +124,15 @@
           timestamp: new Date(msg.createdAt)
         }));
         currentConversationId = conversationId;
+        
+        // Reset auto-scroll state when loading a conversation
+        shouldAutoScroll = true;
+        previousMessageCount = messages.length;
+        
+        // Scroll to bottom after loading
+        setTimeout(() => {
+          scrollToBottom(false);
+        }, 100);
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
@@ -78,6 +153,10 @@
         currentConversationId = data.conversation.id;
         messages = [];
         showSidebar = false;
+        
+        // Reset auto-scroll state for new conversation
+        shouldAutoScroll = true;
+        previousMessageCount = 0;
       }
     } catch (error) {
       console.error('Error creating conversation:', error);
@@ -124,6 +203,12 @@
       content: userMessage,
       timestamp: new Date()
     }];
+    
+    // Force scroll to bottom when user sends a message
+    shouldAutoScroll = true;
+    setTimeout(() => {
+      scrollToBottom(true);
+    }, 50);
 
     isLoading = true;
     isStreaming = false;
@@ -189,6 +274,13 @@
                   };
                   messages = [...messages]; // Trigger reactivity
                   
+                  // Auto-scroll during streaming if user is at bottom
+                  if (shouldAutoScroll && !isUserScrolling) {
+                    setTimeout(() => {
+                      scrollToBottom(false); // Use instant scroll for streaming
+                    }, 10);
+                  }
+                  
                   // Small delay to make streaming visible
                   await new Promise(resolve => setTimeout(resolve, 10));
                 } else if (data.type === 'complete') {
@@ -249,6 +341,15 @@
         timestamp: new Date()
       }
     ];
+    
+    // Reset auto-scroll state when clearing chat
+    shouldAutoScroll = true;
+    previousMessageCount = messages.length;
+    
+    // Scroll to bottom after clearing
+    setTimeout(() => {
+      scrollToBottom(false);
+    }, 100);
   }
 </script>
 
@@ -341,6 +442,7 @@
     <!-- Messages Container -->
     <div 
       bind:this={chatContainer}
+      on:scroll={handleScroll}
       class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-900"
     >
       {#each messages as message}

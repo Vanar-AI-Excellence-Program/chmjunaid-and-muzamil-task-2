@@ -12,10 +12,10 @@
   
   <div class="relative z-10 text-center max-w-4xl mx-auto">
     <h1 class="text-4xl md:text-6xl font-bold text-center mb-6 text-gradient">
-      Secure Authentication Made Simple
+      Authenra - Authentication Made Simple
     </h1>
     <p class="text-lg md:text-xl text-center mb-8 max-w-3xl mx-auto text-gray-300 leading-relaxed">
-      Modern, secure authentication system with role-based access, email verification, and OAuth integration. Built with SvelteKit and Tailwind CSS.
+      Modern authentication system with role-based access, email verification, and OAuth integration. Built with SvelteKit and Tailwind CSS.
     </p>
     
     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -39,7 +39,7 @@
     <!-- Feature badges -->
     <div class="flex flex-wrap justify-center gap-3 mb-8">
       <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 border border-gray-700 text-green-400">
-        🔐 Secure Authentication
+        🔐 Authenra
       </span>
       <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 border border-gray-700 text-blue-400">
         📧 Email Verification

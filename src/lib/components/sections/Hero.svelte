@@ -8,14 +8,14 @@
       <!-- Hero Badge -->
       <div class="inline-flex items-center px-4 py-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 text-sm font-medium mb-8">
         <span class="mr-2">🚀</span>
-        Secure Authentication Made Simple
+        Authenra - Authentication Made Simple
       </div>
       
       <!-- Main Heading -->
       <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
-        Secure Authentication
+        Authenra
         <span class="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-          Made Simple
+          Authentication Made Simple
         </span>
       </h1>
       

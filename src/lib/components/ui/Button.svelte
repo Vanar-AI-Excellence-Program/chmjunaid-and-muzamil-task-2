@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let variant: 'primary' | 'secondary' | 'ghost' | 'outline' = 'primary';
+  export let variant: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger' = 'primary';
   export let size: 'sm' | 'md' | 'lg' = 'md';
   export let disabled: boolean = false;
   export let fullWidth: boolean = false;
@@ -11,7 +11,8 @@
     primary: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl focus:ring-orange-500',
     secondary: 'bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-xl focus:ring-gray-500',
     ghost: 'text-gray-300 hover:text-white hover:bg-gray-800 focus:ring-gray-500',
-    outline: 'border border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800 hover:border-gray-500 focus:ring-gray-500'
+    outline: 'border border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800 hover:border-gray-500 focus:ring-gray-500',
+    danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl focus:ring-red-500'
   };
   
   const sizes = {

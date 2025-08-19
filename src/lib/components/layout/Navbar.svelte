@@ -33,7 +33,7 @@
       <!-- Logo -->
       <div class="flex-shrink-0">
         <a href="/" class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          SecureAuth
+          Authenra
         </a>
       </div>
       

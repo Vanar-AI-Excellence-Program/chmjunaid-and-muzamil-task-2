@@ -21,6 +21,12 @@
   let passwordError = '';
   let isChangingPassword = false;
   let notification: { show: boolean; type: 'success' | 'error' | 'warning' | 'info'; message: string } = { show: false, type: 'info', message: '' };
+  
+  // Delete account state
+  let showDeleteAccountForm = false;
+  let deleteAccountPassword = '';
+  let isDeletingAccount = false;
+  let deleteAccountError = '';
 
   onMount(() => {
     newName = user?.name || '';
@@ -122,6 +128,44 @@
 
   function handleSignOut() {
     signOut({ callbackUrl: '/login', redirect: true });
+  }
+
+  async function handleDeleteAccount() {
+    if (!deleteAccountPassword) {
+      deleteAccountError = 'Password is required';
+      return;
+    }
+
+    isDeletingAccount = true;
+    deleteAccountError = '';
+
+    try {
+      const response = await fetch('/profile/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: deleteAccountPassword,
+        }),
+      });
+
+      if (response.ok) {
+        notification = { show: true, type: 'success', message: 'Account deleted successfully. You will be redirected to the login page.' };
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          signOut({ callbackUrl: '/login', redirect: true });
+        }, 2000);
+      } else {
+        const error = await response.json();
+        deleteAccountError = error.error || 'Failed to delete account';
+      }
+    } catch (error) {
+      deleteAccountError = 'An error occurred while deleting your account';
+    } finally {
+      isDeletingAccount = false;
+    }
   }
 </script>
 
@@ -245,7 +289,7 @@
               <div class="flex items-end space-x-3">
                 <Button 
                   variant="primary" 
-                  size="md" 
+                  size="sm" 
                   disabled={isSaving || !newName.trim() || newName === user.name}
                   on:click={handleSaveName}
                 >
@@ -253,7 +297,7 @@
                 </Button>
                 <Button 
                   variant="ghost" 
-                  size="md" 
+                  size="sm" 
                   disabled={isSaving}
                   on:click={() => {
                     editingName = false;
@@ -311,7 +355,7 @@
               <div class="flex items-end space-x-3">
                 <Button 
                   variant="primary" 
-                  size="md" 
+                  size="sm" 
                   disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
                   on:click={handleChangePassword}
                 >
@@ -319,7 +363,7 @@
                 </Button>
                 <Button 
                   variant="ghost" 
-                  size="md" 
+                  size="sm" 
                   disabled={isChangingPassword}
                   on:click={() => {
                     showPasswordForm = false;
@@ -341,6 +385,85 @@
           </div>
         {/if}
       </div>
+
+      <!-- Account Deletion -->
+      {#if !isAdmin}
+        <div class="mt-8 pt-8 border-t border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-1">Delete Account</h3>
+              <p class="text-gray-400 text-sm">Permanently delete your account and all associated data</p>
+            </div>
+            {#if !showDeleteAccountForm}
+              <Button variant="danger" size="sm" on:click={() => showDeleteAccountForm = true}>
+                Delete Account
+              </Button>
+            {/if}
+          </div>
+
+        {#if showDeleteAccountForm}
+          <div class="mt-4 bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+            <!-- Warning Section -->
+            <div class="mb-6">
+              <div class="flex items-start space-x-3">
+                <svg class="w-6 h-6 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div>
+                  <h4 class="text-lg font-semibold text-red-400 mb-2">⚠️ Warning: This action is irreversible</h4>
+                  <div class="text-sm text-gray-300 space-y-1">
+                    <p>• All your data will be permanently deleted</p>
+                    <p>• All chat conversations and messages will be lost</p>
+                    <p>• Your account cannot be recovered</p>
+                    <p>• You will be immediately logged out</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Password Verification -->
+            <div class="space-y-4">
+              <Input
+                type="password"
+                label="Enter your password to confirm"
+                bind:value={deleteAccountPassword}
+                placeholder="Enter your current password"
+                required
+              />
+              
+              <div class="flex items-center space-x-3">
+                <Button 
+                  variant="danger" 
+                  size="sm" 
+                  disabled={isDeletingAccount || !deleteAccountPassword}
+                  on:click={handleDeleteAccount}
+                >
+                  {isDeletingAccount ? 'Deleting...' : 'Permanently Delete Account'}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  disabled={isDeletingAccount}
+                  on:click={() => {
+                    showDeleteAccountForm = false;
+                    deleteAccountPassword = '';
+                    deleteAccountError = '';
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+              
+              {#if deleteAccountError}
+                <p class="text-sm text-red-400">
+                  {deleteAccountError}
+                </p>
+              {/if}
+            </div>
+          </div>
+        {/if}
+        </div>
+      {/if}
     </Card>
 
     <!-- Quick Actions -->

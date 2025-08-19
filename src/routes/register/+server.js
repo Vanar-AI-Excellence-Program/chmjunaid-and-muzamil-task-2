@@ -3,7 +3,7 @@ import { db } from '$lib/db.js';
 import { users } from '$lib/schema.js';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { sendOTPEmail } from '$lib/email.js';
+import { sendOTPEmail, sendWelcomeEmail } from '$lib/email.js';
 import { generateOTP, generateOTPExpiry } from '$lib/utils.js';
 
 export async function POST({ request }) {
@@ -47,6 +47,14 @@ export async function POST({ request }) {
     } catch (emailError) {
       console.error('Failed to send OTP email:', emailError);
       // Don't fail registration if email fails
+    }
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(email, name);
+    } catch (welcomeEmailError) {
+      console.error('Failed to send welcome email:', welcomeEmailError);
+      // Don't fail registration if welcome email fails
     }
     
     return json({ 
