@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import MessageRenderer from '$lib/components/MessageRenderer.svelte';
   
   let messages: Array<{type: 'user' | 'bot', content: string, timestamp: Date}> = [];
   let conversations: Array<{id: number, title: string, createdAt: Date, updatedAt: Date}> = [];
@@ -23,7 +24,25 @@
       messages = [
         {
           type: 'bot',
-          content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?',
+          content: `# Welcome! 🤖
+
+I'm your **AI assistant** powered by Google Gemini. I can help you with various tasks and now support rich text rendering!
+
+## What I can do:
+- Answer questions with **formatted text**
+- Create \`code snippets\`
+- Generate **tables** like this:
+
+| Feature | Status |
+|---------|--------|
+| Text formatting | ✅ Enabled |
+| Tables | ✅ Enabled |
+| Code highlighting | ✅ Enabled |
+| Lists | ✅ Enabled |
+
+> **Tip:** Try asking me to create a table or format some text!
+
+How can I help you today?`,
           timestamp: new Date()
         }
       ];
@@ -180,7 +199,25 @@
           messages = [
             {
               type: 'bot',
-              content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?',
+              content: `# Welcome! 🤖
+
+I'm your **AI assistant** powered by Google Gemini. I can help you with various tasks and now support rich text rendering!
+
+## What I can do:
+- Answer questions with **formatted text**
+- Create \`code snippets\`
+- Generate **tables** like this:
+
+| Feature | Status |
+|---------|--------|
+| Text formatting | ✅ Enabled |
+| Tables | ✅ Enabled |
+| Code highlighting | ✅ Enabled |
+| Lists | ✅ Enabled |
+
+> **Tip:** Try asking me to create a table or format some text!
+
+How can I help you today?`,
               timestamp: new Date()
             }
           ];
@@ -337,7 +374,25 @@
     messages = [
       {
         type: 'bot',
-        content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?',
+        content: `# Welcome! 🤖
+
+I'm your **AI assistant** powered by Google Gemini. I can help you with various tasks and now support rich text rendering!
+
+## What I can do:
+- Answer questions with **formatted text**
+- Create \`code snippets\`
+- Generate **tables** like this:
+
+| Feature | Status |
+|---------|--------|
+| Text formatting | ✅ Enabled |
+| Tables | ✅ Enabled |
+| Code highlighting | ✅ Enabled |
+| Lists | ✅ Enabled |
+
+> **Tip:** Try asking me to create a table or format some text!
+
+How can I help you today?`,
         timestamp: new Date()
       }
     ];
@@ -365,8 +420,9 @@
           on:click={createNewConversation}
           class="p-2 text-orange-400 hover:bg-gray-800 rounded-lg transition-colors"
           title="New Chat"
+          aria-label="Create new conversation"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
         </button>
@@ -382,25 +438,27 @@
         </div>
       {:else}
         {#each conversations as conversation}
-          <div 
-            class="p-4 rounded-lg cursor-pointer transition-all duration-200 mb-2 {currentConversationId === conversation.id ? 'bg-gray-800 border border-orange-500/30' : 'hover:bg-gray-800'}"
-            on:click={() => loadConversation(conversation.id)}
-          >
+          <div class="p-4 rounded-lg transition-all duration-200 mb-2 {currentConversationId === conversation.id ? 'bg-gray-800 border border-orange-500/30' : 'hover:bg-gray-800'}">
             <div class="flex items-center justify-between">
-              <div class="flex-1 min-w-0">
+              <button
+                class="flex-1 min-w-0 text-left"
+                on:click={() => loadConversation(conversation.id)}
+                aria-label="Load conversation: {conversation.title}"
+              >
                 <h3 class="text-sm font-medium text-white truncate">
                   {conversation.title}
                 </h3>
                 <p class="text-xs text-gray-400 mt-1">
                   {conversation.updatedAt.toLocaleDateString()}
                 </p>
-              </div>
+              </button>
               <button
-                on:click|stopPropagation={() => deleteConversation(conversation.id)}
-                class="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                on:click={() => deleteConversation(conversation.id)}
+                class="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors ml-2"
                 title="Delete conversation"
+                aria-label="Delete conversation: {conversation.title}"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                 </svg>
               </button>
@@ -449,12 +507,16 @@
         <div class="flex {message.type === 'user' ? 'justify-end' : 'justify-start'}">
           <div class="max-w-3xl">
             <div class="rounded-2xl px-6 py-4 {message.type === 'user' ? 'message-user' : 'message-bot'}">
-              <p class="text-base leading-relaxed">
-                {message.content}
-                {#if isStreaming && message === messages[messages.length - 1]}
-                  <span class="inline-block w-0.5 h-5 bg-white ml-1 animate-pulse"></span>
-                {/if}
-              </p>
+              {#if message.type === 'user'}
+                <p class="text-base leading-relaxed">
+                  {message.content}
+                </p>
+              {:else}
+                <MessageRenderer 
+                  content={message.content} 
+                  isStreaming={isStreaming && message === messages[messages.length - 1]}
+                />
+              {/if}
               <p class="text-sm {message.type === 'user' ? 'text-orange-100' : 'text-gray-400'} mt-3">
                 {message.timestamp.toLocaleTimeString()}
               </p>
