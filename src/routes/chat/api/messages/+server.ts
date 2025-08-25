@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
       return json({ error: 'Conversation ID is required' }, { status: 400 });
     }
 
-    const userId = session.user.id;
+    const userId = parseInt(session.user.id);
 
     // Verify the conversation belongs to the user
     const conversation = await db
@@ -39,7 +39,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
       .select()
       .from(messages)
       .where(eq(messages.conversationId, parseInt(conversationId)))
-      .orderBy(asc(messages.createdAt));
+      .orderBy(asc(messages.orderIndex));
 
     return json({ messages: conversationMessages });
   } catch (error) {
@@ -56,7 +56,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     const { conversationId, content, role } = await request.json();
-    const userId = session.user.id;
+    const userId = parseInt(session.user.id);
 
     if (!conversationId || !content || !role) {
       return json({ error: 'Conversation ID, content, and role are required' }, { status: 400 });

@@ -1,8 +1,20 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import MessageRenderer from '$lib/components/MessageRenderer.svelte';
+  import MessageActions from '$lib/components/MessageActions.svelte';
+  import MessageEditor from '$lib/components/MessageEditor.svelte';
   
-  let messages: Array<{type: 'user' | 'bot', content: string, timestamp: Date}> = [];
+  interface Message {
+    id: string;
+    type: 'user' | 'bot';
+    content: string;
+    timestamp: Date;
+    isEdited?: boolean;
+    orderIndex?: number;
+    versionNumber?: number;
+  }
+  
+  let messages: Message[] = [];
   let conversations: Array<{id: number, title: string, createdAt: Date, updatedAt: Date}> = [];
   let currentConversationId: number | null = null;
   let inputMessage = '';
@@ -16,6 +28,11 @@
   let isUserScrolling = false;
   let scrollTimeout: NodeJS.Timeout;
   let previousMessageCount = 0;
+  
+  // Message editing and navigation state
+  let editingMessageId: string | null = null;
+  let regeneratingMessageId: string | null = null;
+  let messageNavigationData: Record<string, { hasPrevious: boolean; hasNext: boolean }> = {};
 
   onMount(async () => {
     await loadConversations();
@@ -23,6 +40,7 @@
     if (!currentConversationId) {
       messages = [
         {
+          id: 'welcome',
           type: 'bot',
           content: `# Welcome! 🤖
 
@@ -138,15 +156,22 @@ How can I help you today?`,
       if (response.ok) {
         const data = await response.json();
         messages = data.messages.map((msg: any) => ({
+          id: msg.id,
           type: msg.role === 'user' ? 'user' : 'bot',
           content: msg.content,
-          timestamp: new Date(msg.createdAt)
+          timestamp: new Date(msg.createdAt),
+          isEdited: msg.isEdited || false,
+          orderIndex: msg.orderIndex || 0,
+          versionNumber: msg.versionNumber || 1
         }));
         currentConversationId = conversationId;
         
         // Reset auto-scroll state when loading a conversation
         shouldAutoScroll = true;
         previousMessageCount = messages.length;
+        
+        // Load navigation data for messages
+        await loadMessageNavigationData();
         
         // Scroll to bottom after loading
         setTimeout(() => {
@@ -198,6 +223,7 @@ How can I help you today?`,
           currentConversationId = null;
           messages = [
             {
+              id: 'welcome',
               type: 'bot',
               content: `# Welcome! 🤖
 
@@ -236,6 +262,7 @@ How can I help you today?`,
     
     // Add user message
     messages = [...messages, {
+      id: `temp-${Date.now()}`,
       type: 'user',
       content: userMessage,
       timestamp: new Date()
@@ -269,6 +296,7 @@ How can I help you today?`,
       // Add initial bot message for streaming
       const botMessageIndex = messages.length;
       messages = [...messages, {
+        id: `temp-bot-${Date.now()}`,
         type: 'bot',
         content: '',
         timestamp: new Date()
@@ -352,6 +380,7 @@ How can I help you today?`,
     } catch (error) {
       console.error('Chat error:', error);
       messages = [...messages, {
+        id: `error-${Date.now()}`,
         type: 'bot',
         content: 'Sorry, I\'m having trouble connecting right now. Please try again.',
         timestamp: new Date()
@@ -373,6 +402,7 @@ How can I help you today?`,
     currentConversationId = null;
     messages = [
       {
+        id: 'welcome',
         type: 'bot',
         content: `# Welcome! 🤖
 
@@ -405,6 +435,140 @@ How can I help you today?`,
     setTimeout(() => {
       scrollToBottom(false);
     }, 100);
+  }
+
+  // Message editing functions
+  async function handleEditMessage(event: CustomEvent) {
+    const { messageId } = event.detail;
+    editingMessageId = messageId;
+  }
+
+  async function handleSaveEdit(event: CustomEvent) {
+    const { newContent } = event.detail;
+    const messageId = editingMessageId;
+    
+    if (!messageId) return;
+
+    try {
+      const response = await fetch(`/api/messages/${messageId}/edit`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newContent })
+      });
+
+      if (response.ok) {
+        // Update the message in the local state
+        const messageIndex = messages.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+          messages[messageIndex] = {
+            ...messages[messageIndex],
+            content: newContent,
+            isEdited: true
+          };
+          messages = [...messages];
+        }
+        
+        // Reload the conversation to get updated messages
+        if (currentConversationId) {
+          await loadConversation(currentConversationId);
+        }
+      } else {
+        console.error('Failed to edit message');
+      }
+    } catch (error) {
+      console.error('Error editing message:', error);
+    } finally {
+      editingMessageId = null;
+    }
+  }
+
+  function handleCancelEdit() {
+    editingMessageId = null;
+  }
+
+  // Message regeneration functions
+  async function handleRegenerateMessage(event: CustomEvent) {
+    const { messageId } = event.detail;
+    regeneratingMessageId = messageId;
+
+    try {
+      const response = await fetch(`/api/messages/${messageId}/regenerate`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Reload the conversation to get updated messages
+        if (currentConversationId) {
+          await loadConversation(currentConversationId);
+        }
+      } else {
+        console.error('Failed to regenerate response');
+      }
+    } catch (error) {
+      console.error('Error regenerating response:', error);
+    } finally {
+      regeneratingMessageId = null;
+    }
+  }
+
+  // Message navigation functions
+  async function handleNavigateMessage(event: CustomEvent) {
+    const { direction, messageId } = event.detail;
+    
+    try {
+      const response = await fetch(`/api/messages/${messageId}/versions`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (direction === 'previous' && data.navigation.previousMessageId) {
+          // Navigate to previous message
+          const prevMessage = messages.find(m => m.id === data.navigation.previousMessageId);
+          if (prevMessage) {
+            // Scroll to the previous message
+            const messageElement = document.querySelector(`[data-message-id="${data.navigation.previousMessageId}"]`);
+            if (messageElement) {
+              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        } else if (direction === 'next' && data.navigation.nextMessageId) {
+          // Navigate to next message
+          const nextMessage = messages.find(m => m.id === data.navigation.nextMessageId);
+          if (nextMessage) {
+            // Scroll to the next message
+            const messageElement = document.querySelector(`[data-message-id="${data.navigation.nextMessageId}"]`);
+            if (messageElement) {
+              messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error navigating message:', error);
+    }
+  }
+
+  // Load navigation data for messages
+  async function loadMessageNavigationData() {
+    for (const message of messages) {
+      if (message.id.startsWith('temp-') || message.id.startsWith('welcome') || message.id.startsWith('error-')) {
+        continue; // Skip temporary messages
+      }
+      
+      try {
+        const response = await fetch(`/api/messages/${message.id}/versions`);
+        if (response.ok) {
+          const data = await response.json();
+          messageNavigationData[message.id] = {
+            hasPrevious: data.navigation.hasPrevious,
+            hasNext: data.navigation.hasNext
+          };
+        }
+      } catch (error) {
+        console.error('Error loading navigation data for message:', message.id, error);
+      }
+    }
   }
 </script>
 
@@ -503,23 +667,55 @@ How can I help you today?`,
       on:scroll={handleScroll}
       class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-900"
     >
-      {#each messages as message}
-        <div class="flex {message.type === 'user' ? 'justify-end' : 'justify-start'}">
-          <div class="max-w-3xl">
+      {#each messages as message, index}
+        <div 
+          class="flex {message.type === 'user' ? 'justify-end' : 'justify-start'} group"
+          data-message-id={message.id}
+        >
+          <div class="max-w-3xl relative">
             <div class="rounded-2xl px-6 py-4 {message.type === 'user' ? 'message-user' : 'message-bot'}">
-              {#if message.type === 'user'}
-                <p class="text-base leading-relaxed">
-                  {message.content}
-                </p>
-              {:else}
-                <MessageRenderer 
-                  content={message.content} 
-                  isStreaming={isStreaming && message === messages[messages.length - 1]}
+              {#if editingMessageId === message.id}
+                <MessageEditor
+                  content={message.content}
+                  isVisible={true}
+                  on:save={handleSaveEdit}
+                  on:cancel={handleCancelEdit}
                 />
+              {:else}
+                {#if message.type === 'user'}
+                  <p class="text-base leading-relaxed">
+                    {message.content}
+                  </p>
+                {:else}
+                  <MessageRenderer 
+                    content={message.content} 
+                    isStreaming={isStreaming && message === messages[messages.length - 1]}
+                  />
+                {/if}
+                
+                <!-- Message actions -->
+                <div class="flex items-center justify-between mt-3">
+                  <p class="text-sm {message.type === 'user' ? 'text-orange-100' : 'text-gray-400'}">
+                    {message.timestamp.toLocaleTimeString()}
+                    {#if message.isEdited}
+                      <span class="ml-2 text-xs text-gray-500">(edited)</span>
+                    {/if}
+                  </p>
+                  
+                  <MessageActions
+                    messageId={message.id}
+                    messageType={message.type}
+                    isEdited={message.isEdited || false}
+                    hasPrevious={messageNavigationData[message.id]?.hasPrevious || false}
+                    hasNext={messageNavigationData[message.id]?.hasNext || false}
+                    isEditing={editingMessageId === message.id}
+                    isRegenerating={regeneratingMessageId === message.id}
+                    on:edit={handleEditMessage}
+                    on:regenerate={handleRegenerateMessage}
+                    on:navigate={handleNavigateMessage}
+                  />
+                </div>
               {/if}
-              <p class="text-sm {message.type === 'user' ? 'text-orange-100' : 'text-gray-400'} mt-3">
-                {message.timestamp.toLocaleTimeString()}
-              </p>
             </div>
           </div>
         </div>

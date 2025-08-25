@@ -60,11 +60,20 @@ export const conversations = pgTable('conversation', {
 });
 
 export const messages = pgTable('message', {
-  id: serial('id').primaryKey(),
+  id: varchar('id', { length: 36 }).primaryKey().default('gen_random_uuid()'),
   conversationId: integer('conversationId').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
+  originalContent: text('originalContent'), // Store original content for editing
+  editedContent: text('editedContent'), // Store edited content
   role: varchar('role', { length: 20 }).notNull(), // 'user' or 'assistant'
+  parentId: varchar('parentId', { length: 36 }).references(() => messages.id),
+  previousId: varchar('previousId', { length: 36 }).references(() => messages.id),
+  orderIndex: integer('orderIndex').notNull().default(0), // For maintaining message order
+  versionNumber: integer('versionNumber').notNull().default(1), // Track message versions
+  isEdited: boolean('isEdited').default(false), // Track if message was edited
+  editedAt: timestamp('editedAt', { withTimezone: true }), // When message was last edited
   createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).defaultNow(),
 });
 
 // User Sessions Table

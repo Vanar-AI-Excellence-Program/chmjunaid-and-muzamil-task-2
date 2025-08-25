@@ -67,13 +67,26 @@ export async function POST({ request, locals }) {
       }
     }
 
+    // Get the next order index for this conversation
+    const lastMessage = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, currentConversationId))
+      .orderBy(desc(messages.orderIndex))
+      .limit(1)
+      .then(res => res[0]);
+
+    const nextOrderIndex = (lastMessage?.orderIndex || 0) + 1;
+
     // Save user message to database
     await db
       .insert(messages)
       .values({
         conversationId: currentConversationId,
         content: message,
-        role: 'user'
+        originalContent: message,
+        role: 'user',
+        orderIndex: nextOrderIndex
       });
 
     // Update conversation's updatedAt timestamp
@@ -152,7 +165,9 @@ export async function POST({ request, locals }) {
               .values({
                 conversationId: currentConversationId,
                 content: fullResponse,
-                role: 'assistant'
+                originalContent: fullResponse,
+                role: 'assistant',
+                orderIndex: nextOrderIndex + 1
               });
           }
           

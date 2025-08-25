@@ -116,18 +116,66 @@
               <span class="font-medium">{dashboardStats.lastLogin}</span>
             </div>
           </div>
-        </divThe TypeScript error "Expected token }" at line 111 indicates a missing or extra closing brace in the script or markup. I will carefully check the component code around that line and fix any unbalanced braces or syntax issues.
-
-I will now fix the missing or extra brace issue in the EnhancedDashboard.svelte file.
-
-<edit_file>
-<path>my-app/src/lib/components/dashboard/EnhancedDashboard.svelte</path>
-<content>
-<<<<<<< SEARCH
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Role:</span>
-              <span class="fontThe error "Expected token }" usually means a missing or extra closing brace. The last visible line is incomplete: `<span class="fontThe error "Expected token }" usually means a missing or extra closing brace. The last visible line is incomplete: `<span class="font`
-=======
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Role:</span>
-              <span class="font-medium">{user?.role}</span>
+        </div>
+      </Card>
+      
+      <!-- Quick Actions Card -->
+      <Card variant="elevated">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+          <div class="space-y-3">
+            {#each quickActions as action}
+              <Button variant="outline" href={action.href} class="w-full justify-start">
+                <span class="mr-3">{action.icon}</span>
+                {action.label}
+              </Button>
+            {/each}
+          </div>
+        </div>
+      </Card>
+    </div>
+    
+    <!-- Center Column - Recent Activity -->
+    <div class="space-y-6">
+      <Card variant="elevated">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
+          <div class="space-y-4">
+            {#each recentActivity as activity}
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                  <span class="text-gray-900 dark:text-white">{activity.action}</span>
+                </div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">{activity.timestamp}</span>
+              </div>
+            {/each}
+          </div>
+        </div>
+      </Card>
+    </div>
+    
+    <!-- Right Column - System Status -->
+    <div class="space-y-6">
+      <Card variant="elevated">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Status</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Database:</span>
+              <span class="text-green-600">Online</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-600 dark:text-gray-400">API:</span>
+              <span class="text-green-600">Healthy</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Storage:</span>
+              <span class="text-green-600">Normal</span>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  </div>
+</div>
