@@ -66,3 +66,52 @@ export const messages = pgTable('message', {
   role: varchar('role', { length: 20 }).notNull(), // 'user' or 'assistant'
   createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
 });
+
+// User Sessions Table
+export const userSessions = pgTable('userSession', {
+  id: serial('id').primaryKey(),
+  userId: integer('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sessionToken: varchar('sessionToken', { length: 1024 }).notNull(),
+  ipAddress: varchar('ipAddress', { length: 45 }),
+  userAgent: text('userAgent'),
+  loginTime: timestamp('loginTime', { withTimezone: true }).defaultNow(),
+  logoutTime: timestamp('logoutTime', { withTimezone: true }),
+  isActive: boolean('isActive').default(true),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+});
+
+// User Activities Table
+export const userActivities = pgTable('userActivity', {
+  id: serial('id').primaryKey(),
+  userId: integer('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  activityType: varchar('activityType', { length: 50 }).notNull(), // 'login', 'logout', 'chat', 'profile_update', 'password_change', etc.
+  description: text('description').notNull(),
+  metadata: jsonb('metadata'), // Additional data like IP, user agent, etc.
+  ipAddress: varchar('ipAddress', { length: 45 }),
+  userAgent: text('userAgent'),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+});
+
+// User Stats Table
+export const userStats = pgTable('userStat', {
+  id: serial('id').primaryKey(),
+  userId: integer('userId').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  totalChatMessages: integer('totalChatMessages').default(0),
+  totalConversations: integer('totalConversations').default(0),
+  lastActivityAt: timestamp('lastActivityAt', { withTimezone: true }),
+  lastLoginAt: timestamp('lastLoginAt', { withTimezone: true }),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).defaultNow(),
+});
+
+// Admin Actions Table (for tracking admin activities)
+export const adminActions = pgTable('adminAction', {
+  id: serial('id').primaryKey(),
+  adminId: integer('adminId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  actionType: varchar('actionType', { length: 50 }).notNull(), // 'user_delete', 'role_change', 'user_disable', etc.
+  targetUserId: integer('targetUserId').references(() => users.id, { onDelete: 'cascade' }),
+  description: text('description').notNull(),
+  metadata: jsonb('metadata'),
+  ipAddress: varchar('ipAddress', { length: 45 }),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
+});

@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '$lib/db.js';
 import { conversations, messages } from '$lib/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc, desc } from 'drizzle-orm';
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
@@ -82,6 +82,25 @@ export async function POST({ request, locals }) {
       .set({ updatedAt: new Date() })
       .where(eq(conversations.id, currentConversationId));
 
+    // Get conversation history (limit to last 20 messages to prevent token overflow)
+    const conversationHistory = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, currentConversationId))
+      .orderBy(desc(messages.createdAt))
+      .limit(20);
+
+    // Reverse to get chronological order (oldest first)
+    conversationHistory.reverse();
+
+    // Format conversation history for Gemini
+    const chatHistory = conversationHistory
+      .filter(msg => msg.role !== 'assistant' || msg.content.trim()) // Filter out empty assistant messages
+      .map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
     // Get the generative model
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
@@ -89,8 +108,13 @@ export async function POST({ request, locals }) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Generate content with streaming
-          const result = await model.generateContentStream(message);
+          // Start a chat session with the conversation history
+          const chat = model.startChat({
+            history: chatHistory.slice(0, -1) // Exclude the current user message from history
+          });
+
+          // Generate content with streaming using the current message
+          const result = await chat.sendMessageStream(message);
           
           let fullResponse = '';
           
